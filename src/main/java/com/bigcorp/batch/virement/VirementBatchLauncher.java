@@ -23,7 +23,7 @@ public class VirementBatchLauncher {
 			System.out.println("Starting the batch job");
 			try {
 				Map<String, JobParameter<?>> parametersMap = new HashMap<>();
-				long version = 7l;
+				long version = 1l;
 				parametersMap.put("output.resource.name", new JobParameter<String>(
 						"target/output/simple/simple-output-"
 								+ LocalDate
