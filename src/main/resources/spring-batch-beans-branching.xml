@@ -1,0 +1,196 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/batch
+    http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+    http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+
+	<import resource="spring-batch-application-context.xml" />
+
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+
+	<bean id="asynchronousJobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+		<property name="taskExecutor">
+			<bean
+				class="org.springframework.core.task.SimpleAsyncTaskExecutor" />
+		</property>
+	</bean>
+
+	<bean id="commandeDupontItemReader"
+		class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="resource"
+			value="file:input/ressort-dupont.csv" />
+		<property name="lineMapper">
+			<bean
+				class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean
+						class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="names"
+							value="name,length,manufactured_date,serial_id" />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean
+						class="com.bigcorp.ressort.batch.mapper.RessortFieldSetMapper" />
+				</property>
+			</bean>
+		</property>
+		<property name="linesToSkip" value="1" />
+	</bean>
+
+	<bean id="commandeDurandItemReader"
+		class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="resource"
+			value="file:input/ressort-durand.csv" />
+		<property name="lineMapper">
+			<bean
+				class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean
+						class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="names"
+							value="serial_id,name,manufactured_date,length" />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean
+						class="com.bigcorp.ressort.batch.mapper.RessortFieldSetMapper" />
+				</property>
+			</bean>
+		</property>
+		<property name="linesToSkip" value="1" />
+	</bean>
+
+	<bean id="livraisonRessortItemWriter" scope="step"
+		class="org.springframework.batch.item.file.FlatFileItemWriter">
+		<property name="resource" value="#{jobParameters['output.resource.name']}" />
+		<property name="lineAggregator">
+			<bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+				<property name="delimiter" value="," />
+				<property name="fieldExtractor">
+					<bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+						<property name="names" value="name,serialId,manufacturedDate,length" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+		<property name="appendAllowed" value="true" />
+	</bean>	
+
+	<bean id="ressortItemProcessor"
+		class="com.bigcorp.ressort.batch.processor.RessortProcessor" />
+
+	<bean id="ressortItemWriter" scope="step"
+		class="org.springframework.batch.item.json.JsonFileItemWriter">
+		<constructor-arg name="resource"
+			value="#{jobParameters['output.resource.name']}" />
+		<constructor-arg name="jsonObjectMarshaller"
+			ref="recordMarshaller" />
+		<property name="appendAllowed" value="true" />
+	</bean>
+
+	<bean id="recordMarshaller"
+		class="org.springframework.batch.item.json.JacksonJsonObjectMarshaller">
+	</bean>
+
+	<bean id="baseJobExecutionListener"
+		class="com.bigcorp.ressort.batch.listener.BaseJobExecutionListener" />
+	<bean id="ressortStepExecutionListener"
+		class="com.bigcorp.ressort.batch.listener.RessortStepExecutionListener" />
+	<bean id="commandeRessortChunkListener"
+		class="com.bigcorp.ressort.batch.listener.CommandeRessortChunkListener" />
+
+	<bean id="ressortParametersValidator"
+		class="com.bigcorp.ressort.batch.validator.RessortParametersValidator" />
+
+	<bean id="purgeTasklet" scope="step"
+		class="com.bigcorp.ressort.batch.tasklet.PurgeTasklet">
+		<property name="jsonOutput"
+			value="#{jobParameters['output.resource.name']}" />
+	</bean>
+
+	<bean id="logTasklet" scope="step"
+		class="com.bigcorp.ressort.batch.tasklet.LogTasklet">
+	</bean>
+
+	<bean id="errorTasklet" scope="step"
+		class="com.bigcorp.ressort.batch.tasklet.ErrorTasklet">
+		<property name="jsonOutput"
+			value="#{jobParameters['output.resource.name']}" />
+	</bean>
+
+	<batch:job id="parentJob" abstract="true">
+		<batch:listeners>
+			<batch:listener ref="baseJobExecutionListener" />
+		</batch:listeners>
+	</batch:job>
+
+	<batch:job id="monPremierJob" parent="parentJob"  restartable="true">
+		<batch:validator ref="ressortParametersValidator" />
+		<batch:step id="init">
+			<batch:tasklet ref="logTasklet" />
+			<batch:next on="*" to="lectureCommandeDupont" />
+		</batch:step>
+		<batch:step id="lectureCommandeDupont"  >
+			<batch:tasklet start-limit="5">
+				<batch:chunk reader="commandeDupontItemReader"
+					processor="ressortItemProcessor" writer="livraisonRessortItemWriter"
+					commit-interval="10" skip-limit="10" >
+					 <batch:skippable-exception-classes>
+                		<batch:include class="java.lang.Exception"/>
+                		<batch:exclude class="java.io.FileNotFoundException"/>
+            		</batch:skippable-exception-classes>
+				</batch:chunk>
+				<batch:listeners>
+					<batch:listener ref="commandeRessortChunkListener" />
+				</batch:listeners>
+			</batch:tasklet>
+			<batch:next on="*" to="lectureCommandeDurand" />
+			<batch:next on="FAILED" to="failure" />
+			<batch:listeners>
+				<batch:listener ref="ressortStepExecutionListener" />
+			</batch:listeners>
+		</batch:step>
+		<batch:step id="lectureCommandeDurand"   >
+			<batch:tasklet start-limit="50" > 
+				<batch:chunk reader="commandeDurandItemReader"
+					processor="ressortItemProcessor" writer="livraisonRessortItemWriter"
+					commit-interval="10" skip-limit="1" >
+					 <batch:skippable-exception-classes>
+                		<batch:include class="java.lang.Exception"/>
+                		<batch:exclude class="java.io.FileNotFoundException"/>
+            		</batch:skippable-exception-classes>
+				</batch:chunk>
+				<batch:listeners>
+					<batch:listener ref="commandeRessortChunkListener" />
+				</batch:listeners>
+			</batch:tasklet>
+			<batch:end on="*" />
+			<batch:next on="FAILED" to="failure" />
+			<batch:listeners>
+				<batch:listener ref="ressortStepExecutionListener" />
+			</batch:listeners>
+		</batch:step>
+		<batch:step id="failure" >
+			<batch:tasklet ref="logTasklet"  />
+			<batch:fail on="*"  />
+		</batch:step>
+		<batch:listeners>
+			<batch:listener ref="ressortStepExecutionListener" />
+		</batch:listeners>
+	</batch:job>
+
+	<!--batch:job id="retryBatchJob"> <batch:step id="retryStep"> <batch:tasklet> 
+		<batch:chunk reader="itemReader" writer="itemWriter" processor="retryItemProcessor" 
+		commit-interval="10" retry-limit="3"> <batch:retryable-exception-classes> 
+		<batch:include class="org.apache.http.conn.ConnectTimeoutException"/> <batch:include 
+		class="org.springframework.dao.DeadlockLoserDataAccessException"/> </batch:retryable-exception-classes> 
+		</batch:chunk> </batch:tasklet> </batch:step> </batch:job -->
+</beans>

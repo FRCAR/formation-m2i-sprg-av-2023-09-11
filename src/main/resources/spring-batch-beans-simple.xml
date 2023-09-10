@@ -1,0 +1,96 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/batch
+    http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+    http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+
+	<import resource="spring-batch-application-context.xml" />
+	
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+
+	<bean id="commandeDupontItemReader"
+		class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="resource"
+			value="file:input/ressort-dupont.csv" />
+		<property name="lineMapper">
+			<bean
+				class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean
+						class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="names"
+							value="name,length,manufactured_date,serial_id" />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean
+						class="com.bigcorp.ressort.batch.mapper.RessortFieldSetMapper" />
+				</property>
+			</bean>
+		</property>
+		<property name="linesToSkip" value="1" />
+	</bean>
+
+	<bean id="commandeDurandItemReader"
+		class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="resource"
+			value="file:input/ressort-durand.csv" />
+		<property name="lineMapper">
+			<bean
+				class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean
+						class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="names"
+							value="serial_id,name,manufactured_date,length" />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean
+						class="com.bigcorp.ressort.batch.mapper.RessortFieldSetMapper" />
+				</property>
+			</bean>
+		</property>
+		<property name="linesToSkip" value="1" />
+	</bean>
+
+	<bean id="livraisonRessortItemWriter" scope="step"
+		class="org.springframework.batch.item.file.FlatFileItemWriter">
+		<property name="resource" value="#{jobParameters['output.resource.name']}" />
+		<property name="lineAggregator">
+			<bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+				<property name="delimiter" value="," />
+				<property name="fieldExtractor">
+					<bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+						<property name="names" value="name,serialId,manufacturedDate,length" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+		<property name="appendAllowed" value="true" />
+	</bean>
+
+	<bean id="ressortItemProcessor"
+		class="com.bigcorp.ressort.batch.processor.RessortProcessor" />
+
+	<bean id="recordMarshaller"
+		class="org.springframework.batch.item.json.JacksonJsonObjectMarshaller">
+	</bean>
+
+	<batch:job id="monPremierJob">
+		<batch:step id="monPremierStep">
+			<batch:tasklet>
+				<batch:chunk reader="commandeDupontItemReader"
+					processor="ressortItemProcessor" writer="livraisonRessortItemWriter"
+					commit-interval="10"  >
+				</batch:chunk>
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+	
+</beans>

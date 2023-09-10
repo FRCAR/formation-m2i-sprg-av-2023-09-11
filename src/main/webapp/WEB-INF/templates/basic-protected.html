@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<title>Page protégée par Basic</title>
+<script>
+  window.addEventListener("load", function () {
+    console.log(
+      "Cette fonction est exécutée une fois quand la page est chargée.",
+    );
+  });
+  
+	function reqListener() {
+	  document.querySelector("#result").value = this.responseText;
+	}
+  
+ 	function action(){
+		login =  document.querySelector("#login").value;
+		password =  document.querySelector("#password").value;
+		basicToken = btoa(login + ":" + password);
+			
+		const req = new XMLHttpRequest();
+		req.addEventListener("load", reqListener);
+		
+	    id = document.querySelector("#id").value;
+		req.open("GET", "./cars/" + id);
+		req.setRequestHeader("Authorization", "Basic " + basicToken);
+		req.send();
+  }
+  
+</script>
+
+</head>
+<body>
+ <div>
+  <h1 th:inline="text">
+   Page de récupération de ressource REST protégée par Basic Auth
+  </h1>
+  <label for="login">Identifiant : </label>
+  <br/>
+  <input id="login" type="text" />
+  <br/>
+  <label for="password">Mot de passe : </label>
+  <br/>
+  <input id="password" type="text" />
+  <br/>
+  
+  <label for="id">Id du véhicule à rechercher : </label>
+  <br/>
+  <input id="id" type="number" />
+  <br/>
+  <br/>
+  <a onclick="action()" href="javascript:void(0)">Appeler le webService des voitures</a>
+  <br/>
+  <br/>
+  <label for="result">Résultat de l'appel au WebService : </label>
+  <textarea id="result" readonly="readonly" rows="20" cols="80"></textarea>
+ </div>
+</body>
+</html>
