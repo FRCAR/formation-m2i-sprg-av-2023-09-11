@@ -8,8 +8,8 @@
             <property name="javax.persistence.jdbc.url" value="jdbc:derby://localhost:1527/spring-av-data;create=true" />
             <property name="javax.persistence.jdbc.user" value="admin" />
             <property name="javax.persistence.jdbc.password" value="admin" />
-            <!--property name="javax.persistence.schema-generation.database.action" value="drop-and-create" /-->
-            <!--<property name="javax.persistence.schema-generation.sql-load-script-source" value="sql/create-script.sql" />-->
+            <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+            <!--property name="javax.persistence.schema-generation.sql-load-script-source" value="sql/create-script.sql" />-->
 
             <property name="javax.persistence.validation.mode" value="none" />
             <property name="hibernate.show_sql" value="true" />
