@@ -11,14 +11,17 @@ public class VirementProcessor implements ItemProcessor<DemandeVirement, Viremen
 
 	@Override
 	public Virement process(DemandeVirement item) throws Exception {
+		// Code de transformation
 		Virement virement = new Virement();
-
 		virement.setAmount(item.getAmount());
 		virement.setDate(item.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 		virement.setTime(item.getDate().format(DateTimeFormatter.ofPattern("hh:mm")));
 		virement.setName(item.getLabel());
 		virement.setFrom(item.getAccountFrom());
 		virement.setTo(item.getAccountTo());
+
+		// Code fonctionnel
+		System.out.println("J'ai traité le virement avec le libellé " + item.getLabel());
 
 		return virement;
 	}

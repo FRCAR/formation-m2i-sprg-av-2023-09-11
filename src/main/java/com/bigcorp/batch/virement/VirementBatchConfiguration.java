@@ -80,6 +80,7 @@ public class VirementBatchConfiguration {
 			ItemReader<DemandeVirement> demandeVirementItemReader,
 			ItemProcessor<DemandeVirement, Virement> demandeVirementProcessor,
 			ItemWriter<Virement> demandeVirementItemWriter) {
+
 		// StepBuilder construit des steps en enchaînant les appels de méthode
 		return new StepBuilder("sampleStep", jobRepository)
 				// chunk définit un "morceau" : la taille minimale de travail du batch

@@ -1,6 +1,5 @@
-package com.bigcorp.batch.virement;
+package com.bigcorp.batch.correction;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,36 +11,31 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-public class VirementBatchLauncher {
+public class LivraisonBatchLauncherCorrection {
 	public static void main(String[] args) {
-
 		// Spring Java config
 		try (AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext(
-				VirementBatchConfiguration.class)) {
+				LivraisonBatchConfigurationCorrection.class)) {
 
 			JobLauncher jobLauncher = appContext.getBean(JobLauncher.class);
-			Job job = (Job) appContext.getBean("virementJob");
-			System.out.println("Starting the batch job");
+			Job job = (Job) appContext.getBean("livraisonJob");
+			System.out.println("Démarrage du batch");
 			try {
 				Map<String, JobParameter<?>> parametersMap = new HashMap<>();
-				long version = 1l;
-				parametersMap.put("output.resource.name", new JobParameter<String>(
-						"target/output/simple/simple-output-"
-								+ LocalDate
-								.now()
-								.toString() + "-"
-						+ version + ".csv", String.class));
+				String version = "8";
+				parametersMap.put("version", new JobParameter<String>(
+						version, String.class));
 
 				JobParameters jobParameters = new JobParameters(parametersMap);
 				JobExecution execution = jobLauncher.run(job, jobParameters);
 				System.out.println("Job Status : " + execution.getStatus());
-				System.out.println("Fin du main");
+				System.out.println("Fin du batch");
 				if (execution.getStatus() == BatchStatus.COMPLETED) {
 					System.exit(0);
 				}
 			} catch (Exception e) {
+				System.out.println("Echec du job");
 				e.printStackTrace();
-				System.out.println("Job failed");
 			}
 			System.exit(1);
 		}
