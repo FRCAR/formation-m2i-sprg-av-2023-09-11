@@ -7,6 +7,8 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ExecutionContext;
@@ -24,6 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.support.JdbcTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -61,7 +64,24 @@ public class VirementBatchConfiguration {
 	public Job virementJob(JobRepository jobRepository, Step transformationVirementStep) {
 		return new JobBuilder("virementJob", jobRepository)
 				.start(transformationVirementStep)
+				.listener(new MyJobExecutionListener())
 				.build();
+	}
+
+	/**
+	 * Renvoie un jobLauncher asynchrone (ajouter l'annotation @Bean pour
+	 * l'injecter, et pour que Spring Batch l'utilise).
+	 * 
+	 * @param jobRepository
+	 * @return
+	 * @throws Exception
+	 */
+	public JobLauncher jobLauncher(JobRepository jobRepository) throws Exception {
+		TaskExecutorJobLauncher jobLauncher = new TaskExecutorJobLauncher();
+		jobLauncher.setJobRepository(jobRepository);
+		jobLauncher.setTaskExecutor(new SimpleAsyncTaskExecutor());
+		jobLauncher.afterPropertiesSet();
+		return jobLauncher;
 	}
 
 	/**

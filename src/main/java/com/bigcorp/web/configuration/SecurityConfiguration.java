@@ -4,7 +4,9 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,9 +16,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 
-//@Configuration
-//@EnableWebSecurity
+@Configuration
+@EnableWebSecurity
 //@EnableMethodSecurity(prePostEnabled = true, // Enables @PreAuthorize and @PostAuthorize
 //		securedEnabled = true, // Enables @Secured
 //		jsr250Enabled = true // Enables @RolesAllowed (Ensures JSR-250 annotations are enabled)
@@ -39,7 +42,23 @@ public class SecurityConfiguration {
 	 * @throws Exception
 	 */
 	public SecurityFilterChain securityFilterChainLoginForm(HttpSecurity http) throws Exception {
-		return http.build();
+		return http
+				.authorizeHttpRequests(authorize -> authorize                                  
+						.requestMatchers("/resources/**", "/signup", "/about").permitAll()         
+						.requestMatchers("/admin/**").hasRole("ADMIN")                             
+						.requestMatchers("/db/**").access(new WebExpressionAuthorizationManager("hasRole('ADMIN') and hasRole('DBA')"))   
+						// .requestMatchers("/db/**").access(AuthorizationManagers.allOf(AuthorityAuthorizationManager.hasRole("ADMIN"), AuthorityAuthorizationManager.hasRole("DBA")))   
+						.anyRequest().denyAll()                                                
+				)
+				// la page de login est accessible via /login
+				// et est accessible par tout le monde
+				.formLogin(form -> form
+						.loginPage("/login")
+						.permitAll())
+				// La page de logout est aussi accessible
+				// par tout le monde
+				.logout(logout -> logout.permitAll())
+				.build();
 	}
 
 	/**
@@ -76,6 +95,7 @@ public class SecurityConfiguration {
 	 * @return
 	 * @throws Exception
 	 */
+	@Bean
 	public SecurityFilterChain securityFilterChainJwt(HttpSecurity http) throws Exception {
 		http
 				// seules les utilisateurs avec l'authority ROLE_admin peuvent accéder

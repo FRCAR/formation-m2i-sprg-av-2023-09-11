@@ -21,7 +21,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @SpringBatchTest
 @SpringJUnitConfig(VirementBatchConfiguration.class)
-public class LivraisonBatchJavaTest {
+public class VirementBatchJavaTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
