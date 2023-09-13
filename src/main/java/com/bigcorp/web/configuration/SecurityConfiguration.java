@@ -5,6 +5,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -20,10 +21,10 @@ import org.springframework.security.web.access.expression.WebExpressionAuthoriza
 
 @Configuration
 @EnableWebSecurity
-//@EnableMethodSecurity(prePostEnabled = true, // Enables @PreAuthorize and @PostAuthorize
-//		securedEnabled = true, // Enables @Secured
-//		jsr250Enabled = true // Enables @RolesAllowed (Ensures JSR-250 annotations are enabled)
-//)
+@EnableMethodSecurity(prePostEnabled = true, // Enables @PreAuthorize and @PostAuthorize
+		securedEnabled = true, // Enables @Secured
+		jsr250Enabled = true // Enables @RolesAllowed (Ensures JSR-250 annotations are enabled)
+)
 public class SecurityConfiguration {
 
 	/**
