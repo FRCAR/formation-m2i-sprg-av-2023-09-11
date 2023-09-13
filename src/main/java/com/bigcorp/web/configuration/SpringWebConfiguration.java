@@ -28,6 +28,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @ComponentScan("com.bigcorp.web.controller")
 @ComponentScan("com.bigcorp.web.restcontroller")
 @ComponentScan("com.bigcorp.web.service")
+@ComponentScan("com.bigcorp.restdata.configuration")
+@ComponentScan("com.bigcorp.data.configuration")
 public class SpringWebConfiguration implements WebMvcConfigurer, ApplicationContextAware {
 
 	private ApplicationContext applicationContext;

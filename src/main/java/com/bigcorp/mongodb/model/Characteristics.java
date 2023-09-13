@@ -20,6 +20,7 @@ public class Characteristics {
 	private String name;
 	private Integer weight;
 	private LocalDate creationDate;
+	private String attributEnPlus;
 
 	public String getId() {
 		return id;
@@ -51,6 +52,14 @@ public class Characteristics {
 
 	public void setCreationDate(LocalDate creationDate) {
 		this.creationDate = creationDate;
+	}
+
+	public String getAttributEnPlus() {
+		return attributEnPlus;
+	}
+
+	public void setAttributEnPlus(String attributEnPlus) {
+		this.attributEnPlus = attributEnPlus;
 	}
 
 }

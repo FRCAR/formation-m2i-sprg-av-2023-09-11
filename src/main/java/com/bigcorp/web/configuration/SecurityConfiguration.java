@@ -103,6 +103,7 @@ public class SecurityConfiguration {
 				// aux URLs /cars/**
 				.authorizeHttpRequests(authorize -> authorize
 						.requestMatchers("/cars/**").hasAuthority("ROLE_USER")
+						.requestMatchers("/api/v1/**").permitAll()
 						.anyRequest().authenticated())
 				// Notre serveur sera considéré comme un serveur de ressource
 				// utilisant jwt pour authentifier les requêtes

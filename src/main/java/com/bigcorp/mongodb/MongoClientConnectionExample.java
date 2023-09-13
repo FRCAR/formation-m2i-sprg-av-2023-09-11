@@ -43,5 +43,7 @@ public class MongoClientConnectionExample {
 		} catch (MongoException me) {
 			System.err.println(me);
 		}
+
 	}
+
 }

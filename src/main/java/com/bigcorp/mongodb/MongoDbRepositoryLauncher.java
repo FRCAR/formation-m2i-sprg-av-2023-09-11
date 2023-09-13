@@ -18,8 +18,9 @@ public class MongoDbRepositoryLauncher {
 
 			Characteristics characteristics = new Characteristics();
 			characteristics.setCreationDate(LocalDate.of(2023, 1, 1));
-			characteristics.setName("Super objet");
+			characteristics.setName("Object après-midi");
 			characteristics.setWeight(2_000_000);
+			characteristics.setAttributEnPlus("ceci est un attribut en plus");
 			Characteristics savedCharacteristics = characteristicsDao.save(characteristics);
 
 			System.out.println("Sauvegarde faite ! ");
